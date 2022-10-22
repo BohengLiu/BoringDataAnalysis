@@ -1,18 +1,33 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["referentialIntegrity", "fullTextSearch", "fullTextIndex"]
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider             = "mysql"
+  url                  = env("DATABASE_URL")
+  shadowDatabaseUrl    = env("SHADOW_DATABASE_URL")
+  referentialIntegrity = "prisma"
 }
 
-model TrackEvmAccount {
-  id    Int     @id @default(autoincrement())
-  chainId String  
-  address  String
-  type Int
+model Address {
+  id         Int           @id @default(autoincrement())
+  address    String
+  chainId    Int
+  type       String
+  mark       String
+  sendTx     Transaction[] @relation("sendTx")
+  receivedTx Transaction[] @relation("receivedTx")
+
+  @@unique([address, chainId])
+}
+
+model Transaction {
+  id          Int     @id @default(autoincrement())
+  chainId     Int
+  from        String
+  fromAddress Address @relation("sendTx", fields: [chainId, from], references: [chainId, address])
+  to          String
+  toAddress   Address @relation("receivedTx", fields: [chainId, to], references: [chainId, address])
+  data        String
 }
